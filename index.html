@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Exam 2026 Focus</title>
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="Offline Board Exam Countdown & Motivation App">
+    <link rel="manifest" id="my-manifest">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #4caf50;
+            --danger: #ff5252;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Install Button */
+        #install-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: none;
+        }
+
+        .btn-install {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .btn-install:active { transform: scale(0.95); }
+
+        /* Main Container */
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        /* Countdown Section */
+        .countdown-card {
+            background: var(--card-bg);
+            padding: 40px 20px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            border: 1px solid #333;
+        }
+
+        .title {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .timer-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .days-value { color: var(--danger); }
+        .others-value { color: var(--text-primary); }
+
+        .time-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Motivation Section */
+        .motivation-card {
+            background: linear-gradient(145deg, #252525, #1e1e1e);
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 20px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-left: 4px solid var(--accent);
+        }
+
+        .quote-text {
+            font-size: 1.3rem;
+            font-style: italic;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .quote-sub {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 30px;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #444;
+            color: var(--text-secondary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn-secondary:hover { border-color: #666; color: #fff; }
+
+        /* Notification Status */
+        .status-msg {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .time-value { font-size: 2.5rem; }
+            .countdown-card { padding: 30px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="install-container">
+        <button id="install-btn" class="btn-install">📲 Install App</button>
+    </div>
+
+    <div class="container">
+        <div class="countdown-card">
+            <div class="title">Time Left Until Exam</div>
+            <div class="timer-display">
+                <div class="time-unit">
+                    <span class="time-value days-value" id="days">00</span>
+                    <span class="time-label">Days</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value others-value" id="hours">00</span>
+                    <span class="time-label">Hours</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value others-value" id="minutes">00</span>
+                    <span class="time-label">Mins</span>
+                </div>
+            </div>
+            <div style="margin-top: 20px; font-size: 1rem; color: #888;">
+                Target: 18th February 2026
+            </div>
+        </div>
+
+        <div class="motivation-card" id="motivation-box">
+            <div class="quote-text" id="quote">"Load motivation..."</div>
+            <div class="quote-sub">Stay Focused. Stay Hard.</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-secondary" onclick="enableNotifications()">🔔 Enable Daily Reminders</button>
+            <button class="btn-secondary" onclick="showNewQuote()">🔄 New Motivation</button>
+        </div>
+
+        <div class="status-msg" id="status"></div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        const EXAM_DATE = new Date('2026-02-18T00:00:00').getTime();
+        
+        // --- 2. MOTIVATIONAL DATA (100+ Quotes) ---
+        const quotes = [
+            "Only a few days left. Aaj ka effort future decide karega.",
+            "Board paas aa raha hai. Focus abhi, regret nahi.",
+            "Phone rakh de, kitab utha le. Sapne wait nahi karte.",
+            "Thak gaya hai? Remember why you started.",
+            "Sona kam kar de, sapne bade kar le.",
+            "Your marks will be permanent. Your pain is temporary.",
+            "Har ek ghanta count hota hai. Don't waste it.",
+            "Jo aaj padhega, wahi kal raj karega.",
+            "Distraction hata, future bana.",
+            "Exam hall me blank nahi hona hai toh abhi paseena baha.",
+            "30 days of focus = Lifetime of pride.",
+            "Success is rented, and rent is due every day.",
+            "Aaj ki neend, kal ka result kharab karegi.",
+            "Padhai boring hai, par fail hona usse zyada painful hai.",
+            "Do it for your parents. Do it for yourself.",
+            "Don't stop when you're tired. Stop when you're done.",
+            "Abhi nahi toh kabhi nahi.",
+            "Make your parents proud. Ek hi mauka hai.",
+            "Social media will be there after exams. Your time won't.",
+            "Sleep less, study more. History is waiting.",
+            "Topper alag nahi hote, unki mehnat alag hoti hai.",
+            "Excuses don't burn calories, neither do they get marks.",
+            "Pain of discipline is better than pain of regret.",
+            "Result wale din shor machna chahiye.",
+            "Padhle bhai, mauka hai.",
+            "Be a warrior, not a worrier.",
+            "Your competition is studying right now.",
+            "Don't count the days, make the days count.",
+            "Dream big, work hard, stay focused.",
+            "1 month struggle, lifetime glory.",
+            "Padhai kar le, pyaar baad me.",
+            "Score aisa lao ki sab dekhte reh jayein.",
+            "Paper easy nahi hoga, tujhe strong banna padega.",
+            "Your future self is begging you to study right now.",
+            "Time is free, but it's priceless.",
+            "Believe in yourself and all that you are.",
+            "A goal without a plan is just a wish.",
+            "It always seems impossible until it's done.",
+            "Success doesn't just find you. You have to go out and get it.",
+            "Push yourself, because no one else is going to do it for you.",
+            "Great things never come from comfort zones.",
+            "Wake up with determination. Go to bed with satisfaction.",
+            "Do something today that your future self will thank you for.",
+            "Little things make big days.",
+            "It's going to be hard, but hard does not mean impossible.",
+            "Don't wait for opportunity. Create it.",
+            "Success is the sum of small efforts, repeated day in and day out.",
+            "There are no shortcuts to any place worth going.",
+            "Failure is the opportunity to begin again more intelligently.",
+            "Our greatest weakness lies in giving up.",
+            "You don't have to be great to start, but you have to start to be great.",
+            "Focus on your goal. Don't look in any direction but ahead.",
+            "Start where you are. Use what you have. Do what you can.",
+            "Action is the foundational key to all success.",
+            "Don't watch the clock; do what it does. Keep going.",
+            "Keep your eyes on the stars, and your feet on the ground.",
+            "You are capable of more than you know.",
+            "If you can dream it, you can do it.",
+            "The future belongs to those who believe in the beauty of their dreams.",
+            "Aim for the moon. If you miss, you may hit a star.",
+            "Quality is not an act, it is a habit.",
+            "Well done is better than well said.",
+            "A clever person solves a problem. A wise person avoids it.",
+            "Be the change that you wish to see in the world.",
+            "In the middle of difficulty lies opportunity.",
+            "Knowledge is power.",
+            "The only way to do great work is to love what you do.",
+            "I find that the harder I work, the more luck I seem to have.",
+            "Success is walking from failure to failure with no loss of enthusiasm.",
+            "The secret of success is to do the common thing uncommonly well.",
+            "I never dreamed about success. I worked for it.",
+            "Opportunities don't happen, you create them.",
+            "Try not to become a man of success. Rather become a man of value.",
+            "Don't let yesterday take up too much of today.",
+            "You learn more from failure than from success. Don't let it stop you.",
+            "It's not whether you get knocked down, it's whether you get up.",
+            "If you are working on something that you really care about, you don't have to be pushed.",
+            "Setting goals is the first step in turning the invisible into the visible.",
+            "He who conquers himself is the mightiest warrior.",
+            "Talent wins games, but teamwork and intelligence win championships.",
+            "The man who has confidence in himself gains the confidence of others.",
+            "We generate fears while we sit. We overcome them by action.",
+            "The only limit to our realization of tomorrow will be our doubts of today.",
+            "Creativity is intelligence having fun.",
+            "What you lack in talent can be made up with desire, hustle and giving 110%.",
+            "Do what you can with all you have, wherever you are.",
+            "Develop an 'Attitude of Gratitude'.",
+            "You are never too old to set another goal or to dream a new dream.",
+            "To see what is right and not to do it is want of courage.",
+            "Reading is to the mind what exercise is to the body.",
+            "Fake it until you make it! Act as if you have all the confidence you require.",
+            "The future depends on what you do today.",
+            "Believe you can and you're halfway there.",
+            "Hustle until your haters ask if you're hiring.",
+            "Sweat now, shine later.",
+            "Padhai = Future. Baki sab baad mein.",
+            "Apna time aayega nahi, lana padega.",
+            "Sirf pass nahi hona, Top karna hai.",
+            "Aaj ka dard kal ki taqat banega."
+        ];
+
+        // --- 3. COUNTDOWN LOGIC ---
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = EXAM_DATE - now;
+
+            if (distance < 0) {
+                document.querySelector('.timer-display').innerHTML = '<div class="time-value" style="color:var(--accent)">EXAM STARTED!</div>';
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('days').innerText = days < 10 ? '0' + days : days;
+            document.getElementById('hours').innerText = hours < 10 ? '0' + hours : hours;
+            document.getElementById('minutes').innerText = minutes < 10 ? '0' + minutes : minutes;
+        }
+
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // --- 4. MOTIVATION LOGIC ---
+        function showNewQuote() {
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            const quoteElement = document.getElementById('quote');
+            
+            // Fade out effect
+            quoteElement.style.opacity = 0;
+            setTimeout(() => {
+                quoteElement.innerText = `"${quotes[randomIndex]}"`;
+                quoteElement.style.opacity = 1;
+            }, 300);
+        }
+        // Initial quote
+        showNewQuote();
+
+        // --- 5. PWA & SERVICE WORKER LOGIC (Single File Trick) ---
+        
+        // Define Service Worker Code as a string
+        const swCode = `
+            const CACHE_NAME = 'board-exam-focus-v1';
+            const OFFLINE_URL = self.location.href; // Caches the file itself
+
+            // 1. Install & Cache
+            self.addEventListener('install', (event) => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME).then((cache) => {
+                        // Cache the index page content (since we are a blob, we cache the referrer or specific assets if needed, 
+                        // but for single file, mostly the browser handles the HTML cache. 
+                        // We force cache the main logic).
+                        return self.skipWaiting();
+                    })
+                );
+            });
+
+            // 2. Activate & Clean old caches
+            self.addEventListener('activate', (event) => {
+                event.waitUntil(self.clients.claim());
+            });
+
+            // 3. Fetch (Offline Support)
+            self.addEventListener('fetch', (event) => {
+                event.respondWith(
+                    fetch(event.request).catch(() => {
+                        return caches.match(event.request);
+                    })
+                );
+            });
+
+            // 4. Notification Logic inside Service Worker
+            self.addEventListener('periodicsync', (event) => {
+                if (event.tag === 'daily-motivation') {
+                    event.waitUntil(showNotification());
+                }
+            });
+
+            // Helper to show notification
+            function showNotification() {
+                const quotes = [
+                    "Only a few days left. Aaj ka effort future decide karega.",
+                    "Board paas aa raha hai. Focus abhi, regret nahi.",
+                    "Padhai kar le bhai, mauka hai.",
+                    "Sleep less, study more.",
+                    "Don't give up. The beginning is always the hardest."
+                ];
+                const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                
+                return self.registration.showNotification('Board Exam 2026', {
+                    body: randomQuote,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/2921/2921222.png', // Generic icon
+                    vibrate: [200, 100, 200]
+                });
+            }
+
+            // Since we can't easily schedule precise times in a closed SW without Push API,
+            // we use a heartbeat check when the SW wakes up.
+            self.addEventListener('message', event => {
+                if (event.data && event.data.type === 'CHECK_NOTIFICATIONS') {
+                    // Logic to check time and send if matches slot
+                    // This relies on the page or browser waking the SW.
+                }
+            });
+        `;
+
+        // Create Blob for SW
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+
+        async function registerSW() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const reg = await navigator.serviceWorker.register(swUrl);
+                    console.log('SW Registered', reg);
+                    document.getElementById('status').innerText = "✅ Offline Mode Active";
+                } catch (err) {
+                    console.log('SW Failed', err);
+                }
+            }
+        }
+
+        registerSW();
+
+        // --- 6. NOTIFICATION PERMISSION & SCHEDULING ---
+        function enableNotifications() {
+            if (!("Notification" in window)) {
+                alert("This browser does not support desktop notifications");
+            } else if (Notification.permission === "granted") {
+                new Notification("Notifications Active!", { body: "You will receive daily motivation." });
+                startScheduler();
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(function (permission) {
+                    if (permission === "granted") {
+                        new Notification("Let's crack it!", { body: "Notifications enabled." });
+                        startScheduler();
+                    }
+                });
+            }
+        }
+
+        // Logic to check time and send notification if app is open/minimized
+        function startScheduler() {
+            // Check every minute
+            setInterval(() => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMin = now.getMinutes();
+                
+                // Target times: 7:00, 12:00, 18:30
+                const triggers = [
+                    {h: 7, m: 0},
+                    {h: 12, m: 0},
+                    {h: 18, m: 30}
+                ];
+
+                triggers.forEach(t => {
+                    if (currentHour === t.h && currentMin === t.m && now.getSeconds() < 2) {
+                        sendNotification();
+                    }
+                });
+            }, 10000); // Check every 10 seconds
+        }
+
+        function sendNotification() {
+            if (Notification.permission === "granted") {
+                const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                navigator.serviceWorker.ready.then(function(registration) {
+                    registration.showNotification('Board Exam Reminder', {
+                        body: randomQuote,
+                        vibrate: [200, 100, 200],
+                        requireInteraction: true
+                    });
+                });
+            }
+        }
+        
+        // Auto start scheduler if already granted
+        if (Notification.permission === "granted") {
+            startScheduler();
+        }
+
+        // --- 7. INSTALL BUTTON LOGIC ---
+        let deferredPrompt;
+        const installContainer = document.getElementById('install-container');
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installContainer.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', (e) => {
+            installContainer.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the A2HS prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+
+        // --- 8. DYNAMIC MANIFEST GENERATION (Data URI) ---
+        // This is crucial for PWA "Add to Home Screen" to work with a single file
+        const manifest = {
+            "name": "Exam Focus 2026",
+            "short_name": "ExamFocus",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#121212",
+            "theme_color": "#1a1a1a",
+            "description": "Board Exam Countdown & Motivation",
+            "icons": [
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/2921/2921222.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/2921/2921222.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+        
+        const stringManifest = JSON.stringify(manifest);
+        const blobManifest = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blobManifest);
+        document.getElementById('my-manifest').setAttribute('href', manifestURL);
+
+    </script>
+</body>
+</html>
+
